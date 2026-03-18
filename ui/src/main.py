@@ -14,7 +14,6 @@ gi.require_version('GLib', '2.0')
 from gi.repository import Adw, Gtk, Gio, GLib
 from .configmanager import ConfigManager
 from .files import get_config_dir, get_state_dir
-from .licensedialog import LicenseDialog
 from .statemanager import StateManager
 from .window import BreezydesktopWindow
 from .xrdriveripc import XRDriverIPC
@@ -48,20 +47,14 @@ else:
 class BreezydesktopApplication(Adw.Application):
     """The main application singleton class."""
 
-    def __init__(self, version, skip_verification):
+    def __init__(self, version):
         super().__init__(application_id='com.xronlinux.BreezyDesktop',
                          flags=APPLICATION_FLAGS)
         self.version = version
 
         self.create_action('quit', self.on_quit_action, ['<primary>q'])
         self.create_action('about', self.on_about_action)
-        self.create_action('license', self.on_license_action)
         self.create_action('reset_driver', self.on_reset_driver_action)
-        self._skip_verification = skip_verification or False
-
-        # always do this on start-up since the driver sometimes fails to update the license on boot,
-        # prevent showing a license warning unnecessarily
-        XRDriverIPC.get_instance().write_control_flags({'request_features': ['productivity', 'productivity_pro']})
 
     def do_activate(self):
         """Called when the application is activated.
@@ -71,7 +64,7 @@ class BreezydesktopApplication(Adw.Application):
         """
         win = self.props.active_window
         if not win:
-            win = BreezydesktopWindow(self.version, self._skip_verification, application=self)
+            win = BreezydesktopWindow(application=self)
             win.connect('close-request', lambda *_: self.on_quit_action())
             win.connect('destroy', lambda *_: self.on_quit_action())
         win.present()
@@ -88,11 +81,6 @@ class BreezydesktopApplication(Adw.Application):
                                 license_type=Gtk.License.GPL_3_0,
                                 wrap_license=True)
         about.present()
-
-    def on_license_action(self, widget, _):
-        dialog = LicenseDialog()
-        dialog.set_transient_for(self.props.active_window)
-        dialog.present()
 
     def on_reset_driver_action(self, widget, _):
         XRDriverIPC.get_instance().reset_driver(as_user=None)
@@ -124,8 +112,6 @@ class BreezydesktopApplication(Adw.Application):
 
 def main(version):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-sv", "--skip-verification", action="store_true")
     args = parser.parse_args()
 
-    app = BreezydesktopApplication(version, args.skip_verification)
     return app.run(None)

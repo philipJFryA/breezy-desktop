@@ -1,10 +1,6 @@
 import sys
 from gi.repository import GObject, GLib
-from .time import LICENSE_WARN_SECONDS
 from .xrdriveripc import XRDriverIPC
-
-# shouldn't need a number larger than a year
-LICENSE_ACTION_NEEDED_MAX = 60 * 60 * 24 * 366
 
 class StateManager(GObject.GObject):
     __gsignals__ = {
@@ -16,8 +12,6 @@ class StateManager(GObject.GObject):
         'follow-mode': (bool, 'Follow Mode', 'Whether the follow mode is enabled', False, GObject.ParamFlags.READWRITE),
         'follow-threshold': (float, 'Follow Threshold', 'The follow threshold', 1.0, 45.0, 15.0, GObject.ParamFlags.READWRITE),
         'widescreen-mode': (bool, 'Widescreen Mode', 'Whether widescreen mode is enabled', False, GObject.ParamFlags.READWRITE),
-        'license-action-needed': (bool, 'License Action Needed', 'Whether the license needs attention', False, GObject.ParamFlags.READWRITE),
-        'license-present': (bool, 'License Present', 'Whether a license is present', False, GObject.ParamFlags.READWRITE),
         'enabled-features-list': (object, 'Enabled Features List', 'A list of the enabled features', GObject.ParamFlags.READWRITE),
         'device-supports-sbs': (bool, 'Device Supports SBS', 'Whether the connected device supports SBS', False, GObject.ParamFlags.READWRITE),
         'connected-device-pose-has-position': (bool, 'Pose Has Position', 'Whether the connected device provides position tracking (6DoF)', False, GObject.ParamFlags.READWRITE),
@@ -55,11 +49,6 @@ class StateManager(GObject.GObject):
         self.follow_threshold = 15.0
         self.widescreen_mode = False
         self.connected_device_name = None
-        self.license_action_needed = False
-        self.license_action_needed_seconds = 0
-        self.confirmed_token = False
-        self.license_present = False
-        self.enabled_features = []
         self.device_supports_sbs = False
         self.connected_device_pose_has_position = False
         self.connected_device_full_distance_cm = 0.0
@@ -85,24 +74,6 @@ class StateManager(GObject.GObject):
         if self.connected_device_name != new_device_name:
             self.connected_device_name = new_device_name
             self.emit('device-update', self.connected_device_name)
-
-        license_view = self.state['ui_view'].get('license')
-        if license_view:
-            if not self.license_present:
-                self.set_property('license-present', True)
-            self.confirmed_token = license_view.get('confirmed_token') == True
-            action_needed_details = license_view.get('action_needed')
-            action_needed_seconds = action_needed_details.get('seconds') if action_needed_details else None
-
-            action_needed = action_needed_seconds is not None and action_needed_seconds < LICENSE_WARN_SECONDS
-            if (action_needed != self.license_action_needed):
-                self.license_action_needed_seconds = action_needed_seconds
-                self.set_property('license-action-needed', action_needed)
-            enabled_features = license_view.get('enabled_features', [])
-            if self.enabled_features != enabled_features:
-                self.set_property('enabled-features-list', enabled_features)
-        elif self.license_present:
-            self.set_property('license-present', False)
 
         # only update these properties if a device is still connected
         if (self.connected_device_name):
@@ -139,12 +110,6 @@ class StateManager(GObject.GObject):
             self.follow_mode = value
         if prop.name == 'widescreen-mode':
             self.widescreen_mode = value
-        if prop.name == 'license-action-needed':
-            self.license_action_needed = value
-        if prop.name == 'license-present':
-            self.license_present = value
-        if prop.name == 'enabled-features-list':
-            self.enabled_features = value
         if prop.name == 'device-supports-sbs':
             self.device_supports_sbs = value
         if prop.name == 'connected-device-pose-has-position':
@@ -161,12 +126,6 @@ class StateManager(GObject.GObject):
             return self.follow_mode
         if prop.name == 'widescreen-mode':
             return self.widescreen_mode
-        if prop.name == 'license-action-needed':
-            return self.license_action_needed
-        if prop.name == 'license-present':
-            return self.license_present
-        if prop.name == 'enabled-features-list':
-            return self.enabled_features
         if prop.name == 'device-supports-sbs':
             return self.device_supports_sbs
         if prop.name == 'connected-device-pose-has-position':

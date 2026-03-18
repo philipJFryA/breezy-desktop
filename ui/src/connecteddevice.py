@@ -4,7 +4,6 @@ from .customresolutiondialog import CustomResolutionDialog
 from .displaydistancedialog import DisplayDistanceDialog
 from .extensionsmanager import ExtensionsManager
 from .files import get_state_dir
-from .license import BREEZY_GNOME_FEATURES
 from .settingsmanager import SettingsManager
 from .shortcutdialog import bind_shortcut_settings
 from .statemanager import StateManager

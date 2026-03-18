@@ -1,0 +1,55 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]
+        build_type: [Release]
+        compiler: [meson]
+        include:
+          - os: ubuntu-latest
+
+    steps:
+    - name: hold large packages
+      run: sudo apt-mark hold firefox*
+
+    - name: Update packages
+      run: sudo apt update && sudo apt upgrade
+
+    - name: Install required packages
+      run: sudo apt install -y build-essential meson ninja-build librsvg2-bin libglib2.0-dev libgtk-4-common libgtk-4-bin gtk-update-icon-cache desktop-file-utils gettext appstream
+
+    - uses: actions/checkout@v4
+
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "build-source-dir=${{ github.workspace }}/ui" >> "$GITHUB_OUTPUT"
+
+    - name: Setup Meson
+      run: meson setup ${{ github.workspace }}/ui && cd ${{ github.workspace}}/ui
+#      run: meson setup ${{ steps.strings.outputs.build-output-dir }}/ui
+
+    - name: Compile with Meson
+      run: meson compile
+
+    - name: Package release
+      run: cd .. && bash -x ./bin/package_gnome
+
+    - name: Upload release asset
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
+      with:
+        files: breezyUI-x86_64.tar.gz

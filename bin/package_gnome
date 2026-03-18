@@ -10,29 +10,11 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 ROOT_DIR=$(realpath $SCRIPT_DIR/..)
 VULKAN_DIR=$ROOT_DIR/vulkan
 UI_DIR=$ROOT_DIR/ui
-XR_DRIVER_DIR=$ROOT_DIR/modules/XRLinuxDriver
 
-if [ -z "$GNOME_BACKPORT" ]; then
-  # standard build for GNOME 45 and up
-  echo "Building Breezy GNOME for $ARCH, GNOME versions 45 and up"
-  GNOME_DIR=$ROOT_DIR/gnome
-  BUILD_FILE_NAME=breezyGNOME-$ARCH.tar.gz
-else
-  # special build process for backports
-  echo "Building Breezy GNOME backport \"$GNOME_BACKPORT\" for $ARCH"
-
-  # strip the prefix "gnome-" from the backport name, if it's there
-  GNOME_BACKPORT_NAME=${GNOME_BACKPORT#gnome-}
-
-  GNOME_DIR=$ROOT_DIR/gnome/backports/$GNOME_BACKPORT/gnome
-  UI_DIR=$ROOT_DIR/gnome/backports/$GNOME_BACKPORT/ui
-  BUILD_FILE_NAME=breezyGNOME-$GNOME_BACKPORT_NAME-$ARCH.tar.gz
-  rm -rf $GNOME_DIR/build
-
-  pushd $GNOME_DIR
-  git submodule update --init
-  popd
-fi
+# standard build for GNOME 45 and up
+echo "Building Breezy GNOME for $ARCH, GNOME versions 45 and up"
+GNOME_DIR=$ROOT_DIR/gnome
+BUILD_FILE_NAME=breezyGNOME-$ARCH.tar.gz
 GNOME_BUILD_DIR=$GNOME_DIR/build
 
 mkdir -p $GNOME_BUILD_DIR
@@ -44,16 +26,9 @@ PACKAGE_DIR=$GNOME_BUILD_DIR/breezy_gnome
 rm -rf $PACKAGE_DIR
 mkdir -p $PACKAGE_DIR
 
-source $XR_DRIVER_DIR/bin/inject_ua
-
-# if a custom_banner image exists, copy it over the sombrero one
-if [ -e "$VULKAN_DIR/custom_banner.png" ]; then
-  cp $VULKAN_DIR/custom_banner.png $PACKAGE_DIR
-fi
-
 # copy vulkan setup scripts and configs
 mkdir -p $PACKAGE_DIR/bin
-copy_and_inject_ua "$XR_DRIVER_DIR/bin/ua.sh" "$PACKAGE_DIR/bin" "$GNOME_DIR/bin/setup" "$GNOME_DIR/bin/breezy_gnome_verify" "$GNOME_DIR/bin/breezy_gnome_uninstall" "$GNOME_DIR/bin/breezy_gnome_logs"
+cp "$PACKAGE_DIR/bin" "$GNOME_DIR/bin/setup" "$GNOME_DIR/bin/breezy_gnome_uninstall" "$GNOME_DIR/bin/breezy_gnome_logs"
 
 XR_DRIVER_BINARY_NAME=xrDriver-$ARCH.tar.gz
 XR_DRIVER_BINARY="$XR_DRIVER_DIR/out/$XR_DRIVER_BINARY_NAME"

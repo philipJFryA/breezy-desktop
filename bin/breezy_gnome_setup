@@ -27,7 +27,7 @@ FILE_NAME="breezyGNOME-$ARCH.tar.gz"
 LIBS_FILE_NAME="breezyGNOME-libs-$ARCH.tar.gz"
 GNOME_VERSION=$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)
 VERSION_SPECIFIC_FILENAME="breezyGNOME-$GNOME_VERSION-$ARCH.tar.gz"
-LATEST_RELEASE=$(curl -s "https://api.github.com/repos/wheaney/breezy-desktop/releases/latest")
+LATEST_RELEASE=$(curl -s "https://api.github.com/repos/codyswanson4/breezy-desktop/releases/latest")
 if echo "$LATEST_RELEASE" | jq -e --arg filename "$VERSION_SPECIFIC_FILENAME" '.assets[] | select(.name == $filename)' > /dev/null; then
   echo "Performing setup for GNOME $GNOME_VERSION ($ARCH)"
   FILE_NAME=$VERSION_SPECIFIC_FILENAME
@@ -45,16 +45,15 @@ tmp_dir=$(mktemp -d -t breezy-gnome-XXXXXXXXXX)
 pushd $tmp_dir > /dev/null
 echo "Created temp directory: ${tmp_dir}"
 
-binary_download_url="https://github.com/wheaney/breezy-desktop/releases/latest/download/$FILE_NAME"
-libs_download_url="https://github.com/wheaney/breezy-desktop/releases/latest/download/$LIBS_FILE_NAME"
+binary_download_url="https://github.com/philipJFryA/breezy-desktop/releases/latest/download/$FILE_NAME"
+libs_download_url="https://github.com/philipJFryA/breezy-desktop/releases/latest/download/$LIBS_FILE_NAME"
 if [ "$1" = "-v" ]
 then
-  metrics_version="$2"
-  local_dir_arg="$3"
+  binary_path_arg="$2"
 elif [ "$1" = "--tag" ] && [ -n "$2" ]
 then
-  binary_download_url="https://github.com/wheaney/breezy-desktop/releases/download/$2/$FILE_NAME"
-  libs_download_url="https://github.com/wheaney/breezy-desktop/releases/download/$2/$LIBS_FILE_NAME"
+  binary_download_url="https://github.com/philipJFryA/breezy-desktop/releases/download/$2/$FILE_NAME"
+  libs_download_url="https://github.com/philipJFryA/breezy-desktop/releases/download/$2/$LIBS_FILE_NAME"
 else
   local_dir_arg="$1"
 fi
@@ -112,7 +111,7 @@ mv breezy_desktop_lib/* breezy_gnome/
 pushd breezy_gnome > /dev/null
 
 # run the setup script that comes with this release
-bin/setup $metrics_version
+bin/setup
 
 echo "Deleting temp directory: ${tmp_dir}"
 rm -rf $tmp_dir
