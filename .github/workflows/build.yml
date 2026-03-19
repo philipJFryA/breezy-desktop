@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'free'
 
 jobs:
   build:
@@ -46,7 +48,7 @@ jobs:
       run: meson compile
 
     - name: Package release
-      run: cd .. && bash -x ./bin/package_gnome
+      run: cd .. && bash -x ./bin/package_all
 
     - name: Upload release asset
       uses: softprops/action-gh-release@v2
